@@ -51,7 +51,7 @@ func handleTelEventsRequest(logger *zap.SugaredLogger, telChannel chan TelEvent)
 	}
 }
 
-func (le *TelEvent) UnmarshalJSON(data []byte) error {
+func (te *TelEvent) UnmarshalJSON(data []byte) error {
 	b := struct {
 		Time   time.Time       `json:"time"`
 		Type   TelEventType    `json:"type"`
@@ -61,15 +61,15 @@ func (le *TelEvent) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &b); err != nil {
 		return err
 	}
-	le.Time = b.Time
-	le.Type = b.Type
+	te.Time = b.Time
+	te.Type = b.Type
 
 	if len(b.Record) > 0 && b.Record[0] == '{' {
-		if err := json.Unmarshal(b.Record, &(le.Record)); err != nil {
+		if err := json.Unmarshal(b.Record, &(te.Record)); err != nil {
 			return err
 		}
 	} else {
-		if err := json.Unmarshal(b.Record, &(le.StringRecord)); err != nil {
+		if err := json.Unmarshal(b.Record, &(te.StringRecord)); err != nil {
 			return err
 		}
 	}

@@ -28,7 +28,7 @@ import (
 type TelEventType string
 
 const (
-	// PlatformRuntimeDone event is sent when lambda function is finished it's execution
+	// PlatformRuntimeDone event is sent when lambda function is finished its execution
 	PlatformInitStart             TelEventType = "platform.initStart"
 	PlatformInitRuntimeDone       TelEventType = "platform.initRuntimeDone"
 	PlatformInitReport            TelEventType = "platform.initReport"
@@ -58,6 +58,13 @@ type TelEventRecord struct {
 	RequestID string          `json:"requestId"`
 	Status    string          `json:"status"`
 	Metrics   PlatformMetrics `json:"metrics"`
+	Tracing   PlatformTracing `json:"tracing"`
+}
+
+type PlatformTracing struct {
+	SpanID string `json:"spanId"`
+	Type   string `json:"type"`
+	Value  string `json:"value"`
 }
 
 // ProcessEvents consumes telemetry events until there are no more telemetry events that
@@ -85,6 +92,7 @@ func (tc *Client) ProcessEvents(
 			case PlatformStart:
 				platformStartReqID = telEvent.Record.RequestID
 			case PlatformRuntimeDone:
+				tc.logger.Debugf("Platform RuntimeDone telemetry event has SpanID %s", telEvent.Record.Tracing.SpanID)
 				if err := tc.invocationLifecycler.OnLambdaLogRuntimeDone(
 					telEvent.Record.RequestID,
 					telEvent.Record.Status,
