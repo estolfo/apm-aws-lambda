@@ -20,6 +20,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/elastic/apm-aws-lambda/telemetryapi"
 	"os"
 	"strconv"
 	"strings"
@@ -45,6 +46,7 @@ type App struct {
 	extensionName   string
 	extensionClient *extension.Client
 	logsClient      *logsapi.Client
+	telClient       *telemetryapi.Client
 	apmClient       *apmproxy.Client
 	logger          *zap.SugaredLogger
 	batch           *accumulator.Batch
@@ -101,6 +103,32 @@ func New(ctx context.Context, opts ...ConfigOption) (*App, error) {
 		}
 
 		app.logsClient = lc
+	}
+
+	if !c.disableTelAPI {
+		addr := "sandbox:0"
+		if c.telemetryapiAddr != "" {
+			addr = c.telemetryapiAddr
+		}
+
+		subscriptionTelStreams := []telemetryapi.SubscriptionType{telemetryapi.Platform}
+		if c.enableFunctionTelSubscription {
+			subscriptionTelStreams = append(subscriptionTelStreams, telemetryapi.Function)
+		}
+
+		tc, err := telemetryapi.NewClient(
+			telemetryapi.WithTelAPIBaseURL(fmt.Sprintf("http://%s", c.awsLambdaRuntimeAPI)),
+			telemetryapi.WithListenerAddress(addr),
+			telemetryapi.WithLogBuffer(100),
+			telemetryapi.WithLogger(app.logger),
+			telemetryapi.WithSubscriptionTypes(subscriptionTelStreams...),
+			telemetryapi.WithInvocationLifecycler(app.batch),
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		app.telClient = tc
 	}
 
 	var apmOpts []apmproxy.Option

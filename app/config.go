@@ -26,9 +26,12 @@ type appConfig struct {
 	awsConfig                     aws.Config
 	extensionName                 string
 	disableLogsAPI                bool
+	disableTelAPI                 bool
 	enableFunctionLogSubscription bool
+	enableFunctionTelSubscription bool
 	logLevel                      string
 	logsapiAddr                   string
+	telemetryapiAddr              string
 }
 
 // ConfigOption is used to configure the lambda extension
@@ -78,6 +81,14 @@ func WithLogLevel(level string) ConfigOption {
 func WithLogsapiAddress(s string) ConfigOption {
 	return func(c *appConfig) {
 		c.logsapiAddr = s
+	}
+}
+
+// WithTelapiAddress sets the listener address of the
+// server listening for telemetry event.
+func WithTelapiAddress(s string) ConfigOption {
+	return func(c *appConfig) {
+		c.telemetryapiAddr = s
 	}
 }
 
